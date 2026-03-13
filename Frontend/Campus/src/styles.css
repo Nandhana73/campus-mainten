@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: 'Montserrat', sans-serif;
+  background-color: #fffdf5; 
+}
+
+.viewport-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding-bottom: 8vh;
+  box-sizing: border-box;
+}
+
+h1 { font-weight: 900; font-size: 3.2rem; margin: 0; color: #222; }
+.mustard { color: #E1AD01; }
+.subtitle { color: #888; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin: 10px 0 50px 0; }
+
+.card-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+  width: 100%;
+  max-width: 1200px;
+  flex-wrap: wrap;
+}
+
+.tile {
+  background: #E1AD01;
+  width: 220px;
+  height: 220px;
+  border-radius: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  border: none;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 15px 35px rgba(225, 173, 1, 0.2);
+}
+
+.tile:hover {
+  transform: translateY(-15px);
+  background: #d4a301;
+  box-shadow: 0 25px 50px rgba(225, 173, 1, 0.4);
+}
+
+.login-box {
+  background: white;
+  padding: 50px 40px;
+  border-radius: 45px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.05);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 18px;
+  margin: 10px 0;
+  border: 1px solid #eee;
+  border-radius: 20px;
+  background: #f9f9f9;
+  font-family: inherit;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+textarea { height: 120px; resize: none; }
+
+.btn-main {
+  width: 100%;
+  padding: 18px;
+  background: #E1AD01;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+.room-pill {
+  display: inline-block;
+  background: rgba(225, 173, 1, 0.1);
+  color: #E1AD01;
+  padding: 6px 15px;
+  border-radius: 50px;
+  font-weight: 800;
+  margin-bottom: 15px;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  h1 { font-size: 2rem; }
+  .card-row { gap: 15px; }
+  .tile { width: 140px; height: 140px; border-radius: 25px; }
+  .login-box { padding: 30px 20px; margin: 0 15px; border-radius: 25px; }
+  input, select, textarea { padding: 14px; border-radius: 12px; font-size: 14px; }
+  .btn-main { padding: 14px; border-radius: 12px; font-size: 14px; }
+  .subtitle { font-size: 12px; margin: 8px 0 30px 0; }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 1.5rem; }
+  .tile { width: 120px; height: 120px; border-radius: 20px; }
+  .login-box { padding: 25px 15px; margin: 0 10px; }
+  input, select, textarea { padding: 12px; border-radius: 10px; font-size: 13px; }
+  .btn-main { padding: 12px; border-radius: 10px; font-size: 13px; }
+}
