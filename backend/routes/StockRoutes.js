@@ -51,4 +51,18 @@ router.post("/", async (req, res) => {
   }
 });
 
+// DELETE /api/stocks/:id -> Delete a stock item
+router.delete("/:id", async (req, res) => {
+  try {
+    const stock = await Stock.findByIdAndDelete(req.params.id);
+    if (!stock) {
+      return res.status(404).json({ message: "Stock item not found" });
+    }
+    res.json({ message: "Stock item deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error deleting stock item" });
+  }
+});
+
 export default router;

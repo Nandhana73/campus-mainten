@@ -7,14 +7,13 @@ import Complaint from "../models/complaint.js";
 
 const router = express.Router();
 
-// Get __dirname equivalent for ES modules
+
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configure multer for bill uploads - save to maintenance_uploads folder
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Ensure directory exists before saving
     const dest = path.join(__dirname, "../maintenance_uploads");
     if (!fs.existsSync(dest)) {
       fs.mkdirSync(dest, { recursive: true });
@@ -28,49 +27,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  }
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
 
-// ==================== AI PRIORITY DETECTION ====================
-const detectPriority = (description, problemType) => {
-  const text = (description + " " + problemType).toLowerCase();
-  
-  // High priority keywords - urgent issues
-  const highPriorityKeywords = [
-    "fire", "smoke", "gas leak", "electrical shock", "flood", "flooding",
-    "no water", "burst pipe", "security", "emergency", "dangerous",
-    "broken glass", "window crack", "door lock broken", "roof leak",
-    "severe", "critical", "urgent", "immediate"
-  ];
-  
-  // Low priority keywords - minor issues
-  const lowPriorityKeywords = [
-    "paint", "wall", "minor", "slow", "tiny", "little", "cosmetic",
-    "cleaning", "dust", "replacing", "paint", "fan slow", "light dim"
-  ];
-  
-  // Check for high priority
-  for (const keyword of highPriorityKeywords) {
-    if (text.includes(keyword)) {
-      return "High";
-    }
-  }
-  
-  // Check for low priority
-  for (const keyword of lowPriorityKeywords) {
-    if (text.includes(keyword)) {
-      return "Low";
-    }
-  }
-  
-  // Default to Medium
-  return "Medium";
-};
-// ==================== END AI PRIORITY DETECTION ====================
 
-// GET /api/complaint -> All complaints
+
+// ==================== COMPLAINT ROUTES ====================
+
+// Get all complaints
 router.get("/", async (req, res) => {
   try {
     const complaints = await Complaint.find().sort({ createdAt: -1 });
@@ -81,7 +45,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /api/complaint/debug -> Debug route to see all complaints with their collegeIds
+// Debug endpoint - get complaints with limited fields
 router.get("/debug", async (req, res) => {
   try {
     const complaints = await Complaint.find().select("collegeId name block roomNo").sort({ createdAt: -1 });
@@ -92,7 +56,7 @@ router.get("/debug", async (req, res) => {
   }
 });
 
-// GET /api/complaint/by/:collegeId -> Get complaints by collegeId
+// Get complaints by college ID
 router.get("/by/:collegeId", async (req, res) => {
   try {
     const complaints = await Complaint.find({ collegeId: req.params.collegeId }).sort({ createdAt: -1 });
@@ -103,15 +67,11 @@ router.get("/by/:collegeId", async (req, res) => {
   }
 });
 
-// PATCH /api/complaint/:id -> Update complaint status
+// Update complaint status
 router.patch("/:id", async (req, res) => {
   try {
     const { status } = req.body;
-    const complaint = await Complaint.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+    const complaint = await Complaint.findByIdAndUpdate(req.params.id, { status }, { new: true });
     res.json({ message: "Status updated successfully", complaint });
   } catch (err) {
     console.error(err);
@@ -119,67 +79,202 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
-// POST /api/complaint/:id/bill -> Upload bill for a complaint
+// Upload bill for complaint (adds to array of bills)
 router.post("/:id/bill", upload.single("bill"), async (req, res) => {
   try {
-    console.log("Upload request received for ID:", req.params.id);
+    console.log("Bill upload request received for ID:", req.params.id);
+    console.log("File:", req.file);
     
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
     
     const billPath = "/maintenance_uploads/" + req.file.filename;
-    console.log("Looking for complaint with ID:", req.params.id);
+    console.log("Bill path:", billPath);
     
-    const complaint = await Complaint.findByIdAndUpdate(
-      req.params.id,
-      { bill: billPath },
-      { new: true }
-    );
-    
-    console.log("Complaint found:", complaint);
-    
+    // Find complaint first to get current bills
+    const complaint = await Complaint.findById(req.params.id);
     if (!complaint) {
       return res.status(404).json({ message: "Complaint not found" });
     }
-    res.json({ message: "Bill uploaded successfully", bill: billPath, complaint });
+    
+    console.log("Complaint found:", complaint._id);
+    
+    // Add new bill to array (initialize if needed)
+    const currentBills = complaint.bill || [];
+    currentBills.push(billPath);
+    
+    // Update with array of bills
+    await Complaint.findByIdAndUpdate(req.params.id, { bill: currentBills });
+    
+    const updatedComplaint = await Complaint.findById(req.params.id);
+    res.json({ message: "Bill uploaded successfully", bills: updatedComplaint.bill, complaint: updatedComplaint });
   } catch (err) {
     console.error("Error uploading bill:", err);
     res.status(500).json({ message: "Error uploading bill: " + err.message });
   }
 });
 
-// POST /api/complaint -> Create new complaint
-router.post("/", async (req, res) => {
+// Upload image for complaint (single image replacement)
+router.post("/:id/image", upload.single("image"), async (req, res) => {
+  try {
+    console.log("Image upload request received for ID:", req.params.id);
+    console.log("File:", req.file);
+    
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    
+    const imagePath = "/maintenance_uploads/" + req.file.filename;
+    console.log("Image path:", imagePath);
+    
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+    
+    // Delete previous image if exists
+    if (complaint.image) {
+      try {
+        const fullPath = path.join(__dirname, "..", complaint.image);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      } catch (fileErr) {
+        console.error("Error deleting old image:", fileErr);
+      }
+    }
+    
+    // Update with new image path
+    await Complaint.findByIdAndUpdate(req.params.id, { image: imagePath });
+    
+    const updatedComplaint = await Complaint.findById(req.params.id);
+    res.json({ message: "Image uploaded successfully", image: imagePath, complaint: updatedComplaint });
+  } catch (err) {
+    console.error("Error uploading image:", err);
+    res.status(500).json({ message: "Error uploading image: " + err.message });
+  }
+});
+
+
+// Delete a specific bill from complaint
+router.delete("/:id/bill/:billIndex", async (req, res) => {
+  try {
+    const billIndex = parseInt(req.params.billIndex);
+    const complaint = await Complaint.findById(req.params.id);
+    
+    if (!complaint) return res.status(404).json({ message: "Complaint not found" });
+    
+    const currentBills = complaint.bill || [];
+    if (billIndex < 0 || billIndex >= currentBills.length) {
+      return res.status(400).json({ message: "Invalid bill index" });
+    }
+    
+    // Get the bill path to delete file
+    const billPathToDelete = currentBills[billIndex];
+    
+    // Remove from array
+    currentBills.splice(billIndex, 1);
+    
+    // Update complaint
+    await Complaint.findByIdAndUpdate(req.params.id, { bill: currentBills });
+    
+    // Try to delete the file from filesystem
+    try {
+      const fullPath = path.join(__dirname, "..", billPathToDelete);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    } catch (fileErr) {
+      console.error("Error deleting file:", fileErr);
+    }
+    
+    const updatedComplaint = await Complaint.findById(req.params.id);
+    res.json({ message: "Bill deleted successfully", bills: updatedComplaint.bill, complaint: updatedComplaint });
+  } catch (err) {
+    console.error("Error deleting bill:", err);
+    res.status(500).json({ message: "Error deleting bill: " + err.message });
+  }
+});
+
+// Create new complaint (with optional image upload)
+router.post("/", upload.single("image"), async (req, res) => {
   try {
     const { name, collegeId, role, block, roomNo, problemType, description } = req.body;
     
-    // AI detects priority automatically
-    const detectedPriority = detectPriority(description, problemType);
-    console.log("AI Priority Detection:", detectedPriority);
+    // Get image path if uploaded
+    const image = req.file ? "/maintenance_uploads/" + req.file.filename : "";
     
     const newComplaint = new Complaint({
-      name,
-      collegeId,
-      role,
-      block,
-      roomNo,
-      problemType,
+      name, 
+      collegeId, 
+      role, 
+      block, 
+      roomNo, 
+      problemType, 
       description,
-      status: "Pending",
-      priority: detectedPriority  // AI adds priority
+      image: image,
+      status: "Pending"
     });
     
     await newComplaint.save();
+    
     res.status(201).json({ 
       message: "Complaint submitted successfully", 
-      complaint: newComplaint,
-      aiDetected: { priority: detectedPriority }
+      complaint: newComplaint
     });
   } catch (err) {
-    console.error(err);
+    console.error("Error submitting complaint:", err);
     res.status(500).json({ message: "Error submitting complaint" });
   }
 });
 
+// Delete image from complaint
+router.delete("/:id/image", async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+    
+    if (!complaint.image) {
+      return res.status(400).json({ message: "No image to delete" });
+    }
+    
+    // Get the image path to delete file
+    const imagePathToDelete = complaint.image;
+    
+    // Update complaint to remove image
+    await Complaint.findByIdAndUpdate(req.params.id, { image: "" });
+    
+    // Try to delete the file from filesystem
+    try {
+      const fullPath = path.join(__dirname, "..", imagePathToDelete);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    } catch (fileErr) {
+      console.error("Error deleting file:", fileErr);
+    }
+    
+    res.json({ message: "Image deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting image:", err);
+    res.status(500).json({ message: "Error deleting image: " + err.message });
+  }
+});
+
+// Delete complaint
+router.delete("/:id", async (req, res) => {
+  try {
+    const complaint = await Complaint.findByIdAndDelete(req.params.id);
+    if (!complaint) return res.status(404).json({ message: "Complaint not found" });
+    res.json({ message: "Complaint deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error deleting complaint" });
+  }
+});
+
 export default router;
+
