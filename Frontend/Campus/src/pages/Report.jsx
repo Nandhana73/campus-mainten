@@ -1,18 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext.js";
 
-export default function Report({ selectedRoom, setPage, name, collegeId, role, block }) {
+export default function Report({ selectedRoom, setPage, block }) {
+  const { user } = useAuth();
+  const collegeId = user?.id || '';
+  const name = '';
+  const role = user?.role || 'student';
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
 
   const [uploading, setUploading] = useState(false);
-
-  const [existingIssues] = useState([
-    { id: 1, type: "Electrical", status: "PENDING", description: "Ceiling fan making loud grinding noise." },
-    { id: 4, type: "Plumbing", status: "ONGOING", description: "Water leakage in the washroom." },
-  ]);
+  const [existingComplaints, setExistingComplaints] = useState([]);
+  const [loadingIssues, setLoadingIssues] = useState(true);
 
 
+// -------- FETCH ROOM COMPLAINTS (ALL COLLEGE COMPLAINTS - CAMPUS WIDE) --------
+  const fetchRoomComplaints = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/complaint`);
 
+      if (res.ok) {
+        const allComplaints = await res.json();
+
+        const roomComplaints = allComplaints
+          .filter(
+            (c) =>
+              c.block === `Block ${block}` &&
+              c.roomNo === selectedRoom
+          )
+          .reverse();
+
+        setExistingComplaints(roomComplaints);
+      }
+    } catch (err) {
+      console.error("Error fetching room complaints:", err);
+    } finally {
+      setLoadingIssues(false);
+    }
+  };
+
+  // -------- LOAD COMPLAINTS WHEN PAGE LOADS --------
+  useEffect(() => {
+    fetchRoomComplaints();
+  }, [collegeId, block, selectedRoom]);
+
+
+
+  // -------- SUBMIT COMPLAINT --------
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -20,6 +54,7 @@ export default function Report({ selectedRoom, setPage, name, collegeId, role, b
       alert("Please select a category");
       return;
     }
+
     if (!description.trim()) {
       alert("Please describe the problem");
       return;
@@ -28,7 +63,6 @@ export default function Report({ selectedRoom, setPage, name, collegeId, role, b
     setUploading(true);
 
     try {
-      // Create FormData for file upload
       const formData = new FormData();
       formData.append("name", name);
       formData.append("collegeId", collegeId);
@@ -37,9 +71,7 @@ export default function Report({ selectedRoom, setPage, name, collegeId, role, b
       formData.append("roomNo", selectedRoom);
       formData.append("problemType", category);
       formData.append("description", description);
-
-      console.log("Submitting complaint");
-
+      formData.append("estimatedAmount", 0);
 
       const res = await fetch("http://localhost:5000/api/complaint", {
         method: "POST",
@@ -47,31 +79,36 @@ export default function Report({ selectedRoom, setPage, name, collegeId, role, b
       });
 
       const result = await res.json();
-      console.log("Response status:", res.status);
-      console.log("Response result:", result);
-      
+
       if (res.ok) {
         alert(result.message);
-        setPage("options");
+
+        setCategory("");
+        setDescription("");
+
+        fetchRoomComplaints(); // refresh issues list
       } else {
         alert(result.message || "Error submitting complaint");
       }
     } catch (err) {
       console.error("Network error:", err);
-      alert("Error: Unable to connect to server. Please make sure the backend server is running on port 5000.");
+      alert(
+        "Error: Unable to connect to server. Please make sure backend server is running on port 5000."
+      );
     } finally {
       setUploading(false);
     }
   };
 
+  // -------- STATUS STYLE --------
   const getStatusStyle = (status) => {
     let bg = "#dc3545";
-    if (status === "COMPLETED") bg = "#28a745";
-    if (status === "ONGOING") bg = "#ffc107";
+    if (status === "Completed") bg = "#28a745";
+    if (status === "Ongoing") bg = "#ffc107";
 
     return {
       backgroundColor: bg,
-      color: status === "ONGOING" ? "#000" : "#fff",
+      color: status === "Ongoing" ? "#000" : "#fff",
       borderRadius: "8px",
       padding: "8px 15px",
       fontSize: "12px",
@@ -108,12 +145,20 @@ export default function Report({ selectedRoom, setPage, name, collegeId, role, b
         />
 
 
-
-        <button className="btn-main" onClick={handleSubmit} disabled={uploading}>
-          {uploading ? "SUBMITTING..." : "SUBMIT REPORT"}
+        <button
+          className="btn-main"
+          onClick={handleSubmit}
+          disabled={uploading}
+        >
+{uploading ? "SUBMITTING..." : "SUBMIT REPORT"}
         </button>
 
-        <p onClick={() => setPage("rooms")} style={{ marginTop: "20px", color: "#bbb", cursor: "pointer" }}>
+
+
+        <p
+          onClick={() => setPage("rooms")}
+          style={{ marginTop: "20px", color: "#bbb", cursor: "pointer" }}
+        >
           ← Cancel
         </p>
       </div>
@@ -126,41 +171,97 @@ export default function Report({ selectedRoom, setPage, name, collegeId, role, b
         </div>
 
         <div style={tableWrapper}>
-          <table style={formalTable}>
-            <thead>
-              <tr style={headerRowFloating}>
-                <th style={{ ...thStyle, borderTopLeftRadius: "15px" }}>Category</th>
-                <th style={thStyle}>Issue Description</th>
-                <th style={{ ...thStyle, textAlign: "center", borderTopRightRadius: "15px" }}>Status</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {existingIssues.map((item) => (
-                <tr key={item.id} style={trStyle}>
-                  <td style={tdStyle}>{item.type}</td>
-                  <td style={{ ...tdStyle, fontStyle: "italic", color: "#666" }}>{item.description}</td>
-                  <td style={{ ...tdStyle, textAlign: "center" }}>
-                    <span style={getStatusStyle(item.status)}>{item.status}</span>
-                  </td>
+          {loadingIssues ? (
+            <p>Loading issues...</p>
+          ) : existingComplaints.length === 0 ? (
+            <p>No existing issues in this room.</p>
+          ) : (
+            <table style={formalTable}>
+              <thead>
+                <tr style={headerRowFloating}>
+                  <th style={{ ...thStyle, borderTopLeftRadius: "15px" }}>Category</th>
+                  <th style={thStyle}>Description</th>
+                  <th style={{ ...thStyle, textAlign: "center", borderTopRightRadius: "15px" }}>
+                    Status
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {existingComplaints.map((c) => (
+                  <tr key={c._id} style={trStyle}>
+                    <td style={tdStyle}>{c.problemType}</td>
+                    <td style={{ ...tdStyle, fontStyle: "italic", color: "#666" }}>
+                      {c.description}
+                    </td>
+                    <td style={{ ...tdStyle, textAlign: "center" }}>
+                      <span style={getStatusStyle(c.status)}>{c.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-const pageBackground = { backgroundColor: "#fcfaf5", minHeight: "100vh", padding: "90px 0", display: "flex", flexDirection: "column", alignItems: "center" };
-const mainContentWrapper = { width: "98%" };
-const topHeader = { display: "flex", justifyContent: "flex-start", padding: "0 15px" };
-const titleStyle = { fontSize: "28px", fontWeight: "900", color: "#333", textTransform: "uppercase" };
-const tableWrapper = { width: "100%", overflow: "hidden" };
-const formalTable = { width: "100%", borderCollapse: "separate", borderSpacing: "0" };
-const headerRowFloating = { backgroundColor: "#E1AD01", boxShadow: "0 12px 25px rgba(225, 173, 1, 0.35)" };
-const thStyle = { padding: "25px 45px", textAlign: "left", fontSize: "14px", fontWeight: "900", color: "#fff", textTransform: "uppercase", backgroundColor: "#E1AD01" };
-const trStyle = { borderBottom: "1px solid #eee" };
-const tdStyle = { padding: "22px 45px", fontSize: "17px", color: "#222", fontWeight: "600", borderBottom: "1px solid #f0f0f0" };
+// -------- STYLES --------
+const pageBackground = {
+  backgroundColor: "#fcfaf5",
+  minHeight: "100vh",
+  padding: "90px 0",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center"
+};
 
+const mainContentWrapper = { width: "98%" };
+
+const topHeader = {
+  display: "flex",
+  justifyContent: "flex-start",
+  padding: "0 15px"
+};
+
+const titleStyle = {
+  fontSize: "28px",
+  fontWeight: "900",
+  color: "#333",
+  textTransform: "uppercase"
+};
+
+const tableWrapper = { width: "100%", overflow: "hidden" };
+
+const formalTable = {
+  width: "100%",
+  borderCollapse: "separate",
+  borderSpacing: "0"
+};
+
+const headerRowFloating = {
+  backgroundColor: "#E1AD01",
+  boxShadow: "0 12px 25px rgba(225, 173, 1, 0.35)"
+};
+
+const thStyle = {
+  padding: "25px 45px",
+  textAlign: "left",
+  fontSize: "14px",
+  fontWeight: "900",
+  color: "#fff",
+  textTransform: "uppercase",
+  backgroundColor: "#E1AD01"
+};
+
+const trStyle = { borderBottom: "1px solid #eee" };
+
+const tdStyle = {
+  padding: "22px 45px",
+  fontSize: "17px",
+  color: "#222",
+  fontWeight: "600",
+  borderBottom: "1px solid #f0f0f0"
+};

@@ -7,8 +7,6 @@ import Complaint from "../models/complaint.js";
 
 const router = express.Router();
 
-
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -30,14 +28,13 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
 
-
-
 // ==================== COMPLAINT ROUTES ====================
 
 // Get all complaints
 router.get("/", async (req, res) => {
   try {
-    const complaints = await Complaint.find().sort({ createdAt: -1 });
+    const complaints = await Complaint.find().sort({ createdAt: -1 }).lean();
+    console.log('GET /api/complaint first complaint estimatedAmount:', complaints[0]?.estimatedAmount);
     res.json(complaints);
   } catch (err) {
     console.error(err);
@@ -67,15 +64,47 @@ router.get("/by/:collegeId", async (req, res) => {
   }
 });
 
-// Update complaint status
+// Update complaint status - FIXED FOR estimatedAmount
 router.patch("/:id", async (req, res) => {
   try {
-    const { status } = req.body;
-    const complaint = await Complaint.findByIdAndUpdate(req.params.id, { status }, { new: true });
-    res.json({ message: "Status updated successfully", complaint });
+    console.log('PATCH /:id received:', req.body, 'for ID:', req.params.id);
+    const { status, estimatedAmount } = req.body;
+    console.log('Parsed estimatedAmount:', estimatedAmount, 'typeof:', typeof estimatedAmount);
+    
+    const updateData = {};
+    
+    if (status !== undefined) {
+      updateData.status = status;
+    }
+    
+    if (estimatedAmount !== undefined && estimatedAmount !== null && estimatedAmount !== '') {
+      const numAmount = Number(estimatedAmount);
+      if (!isNaN(numAmount)) {
+        updateData.estimatedAmount = numAmount;
+        console.log('✅ PATCH saving estimatedAmount:', numAmount);
+      } else {
+        console.log('❌ Invalid number:', estimatedAmount);
+      }
+    }
+    
+    console.log('Final PATCH updateData:', updateData);
+    
+    const complaint = await Complaint.findByIdAndUpdate(
+      req.params.id, 
+      updateData, 
+      { new: true, runValidators: true }
+    );
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+    console.log('Updated complaint full:', complaint);
+    res.json({ 
+      message: "Updated successfully", 
+      complaint: complaint.toObject()
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error updating status" });
+    console.error('PATCH error:', err);
+    res.status(500).json({ message: "Error updating", error: err.message });
   }
 });
 
@@ -156,7 +185,6 @@ router.post("/:id/image", upload.single("image"), async (req, res) => {
   }
 });
 
-
 // Delete a specific bill from complaint
 router.delete("/:id/bill/:billIndex", async (req, res) => {
   try {
@@ -200,7 +228,9 @@ router.delete("/:id/bill/:billIndex", async (req, res) => {
 // Create new complaint (with optional image upload)
 router.post("/", upload.single("image"), async (req, res) => {
   try {
-    const { name, collegeId, role, block, roomNo, problemType, description } = req.body;
+    const { name, collegeId, role, block, roomNo, problemType, description, estimatedAmount = 0 } = req.body;
+    
+    // Duplicate prevention removed - allow multiple submissions
     
     // Get image path if uploaded
     const image = req.file ? "/maintenance_uploads/" + req.file.filename : "";
@@ -214,7 +244,8 @@ router.post("/", upload.single("image"), async (req, res) => {
       problemType, 
       description,
       image: image,
-      status: "Pending"
+      status: "Pending",
+      estimatedAmount: parseFloat(estimatedAmount)
     });
     
     await newComplaint.save();
@@ -277,4 +308,3 @@ router.delete("/:id", async (req, res) => {
 });
 
 export default router;
-

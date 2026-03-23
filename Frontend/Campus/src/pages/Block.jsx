@@ -1,6 +1,11 @@
 import React from "react";
+import { useAuth } from "../context/AuthContext.js";
 
 export default function Block({ setPage, setBlock }) {
+  const { user } = useAuth();
+  const collegeId = user?.id || '';
+  const name = '';
+  const role = user?.role || 'student';
   return (
     <>
       <h1>Select <span className="mustard">Block</span></h1>

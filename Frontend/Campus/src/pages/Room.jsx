@@ -1,7 +1,13 @@
 import React from "react";
 
-export default function Room({ block, setPage, setSelectedRoom, setBlock }) {
+export default function Room({ block, setPage, setSelectedRoom, setBlock, collegeId, name, role }) {
   const rooms = [101, 102, 103, 201, 202, 203, 301, 302, 303];
+
+  const goToReport = (roomNo) => {
+    setSelectedRoom(roomNo.toString());
+    setBlock(block);
+    setPage("report");
+  };
 
   return (
     <>
@@ -13,11 +19,7 @@ export default function Room({ block, setPage, setSelectedRoom, setBlock }) {
             key={r}
             className="tile"
             style={{ width: "110px", height: "110px" }}
-            onClick={() => {
-              setSelectedRoom(r.toString());
-              setBlock(block);
-              setPage("report");
-            }}
+            onClick={() => goToReport(r)}
           >
             <span style={{ fontWeight: "700" }}>
               {r}

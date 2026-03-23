@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext.js";
 
-export default function MyComplaint({ collegeId, setPage }) {
+export default function MyComplaint({ setPage }) {
+  const { user } = useAuth();
+  const collegeId = user?.id || '';
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewImage, setViewImage] = useState(null);
@@ -79,9 +82,11 @@ export default function MyComplaint({ collegeId, setPage }) {
             <table style={tableStyle}>
               <thead style={tableHeader}>
                 <tr>
+                  <th style={thStyle}>Date</th>
                   <th style={thStyle}>Block</th>
                   <th style={thStyle}>Room</th>
                   <th style={thStyle}>Category</th>
+                  <th style={thStyle}>Est. Amount</th>
                   <th style={thStyle}>Description</th>
                   <th style={thStyle}>Status</th>
                 </tr>
@@ -90,25 +95,26 @@ export default function MyComplaint({ collegeId, setPage }) {
               <tbody>
                 {complaints.map((c) => (
                   <tr key={c._id} style={trStyle}>
-                    <td style={tdStyle}>{c.block}</td>
-                    <td style={tdStyle}>{c.roomNo}</td>
-                    <td style={tdStyle}>{c.problemType}</td>
+                  <td style={tdStyle}>{new Date(c.createdAt).toLocaleDateString()}</td>
+                  <td style={tdStyle}>{c.block}</td>
+                  <td style={tdStyle}>{c.roomNo}</td>
+                  <td style={tdStyle}>{c.problemType}</td>
+                  <td style={tdStyle}>₹{c.estimatedAmount || 0}</td>
+                  <td
+                    style={{
+                      ...tdStyle,
+                      fontStyle: "italic",
+                      color: "#666"
+                    }}
+                  >
+                    {c.description}
+                  </td>
 
-                    <td
-                      style={{
-                        ...tdStyle,
-                        fontStyle: "italic",
-                        color: "#666"
-                      }}
-                    >
-                      {c.description}
-                    </td>
-
-                    <td style={{ ...tdStyle, textAlign: "center" }}>
-                      <span style={getStatusStyle(c.status)}>
-                        {c.status}
-                      </span>
-                    </td>
+                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                    <span style={getStatusStyle(c.status)}>
+                      {c.status}
+                    </span>
+                  </td>
                   </tr>
                 ))}
               </tbody>

@@ -1,11 +1,14 @@
 import React from "react";
+import { useAuth } from "../context/AuthContext.js";
 
-export default function OptionMenu({ setPage, collegeId }) {
+export default function OptionMenu({ setPage }) {
+  const { user, logout } = useAuth();
+  const collegeId = user?.id || '';
   return (
     <>
       <h1>What would you <span className="mustard">like to do?</span></h1>
       <p className="subtitle">Select an action to proceed</p>
-      <p style={{fontSize: '14px', color: '#E1AD01', margin: '10px 0', fontWeight: 'bold'}}>Logged in as: {collegeId}</p>
+      <p style={{fontSize: '14px', color: '#E1AD01', margin: '10px 0', fontWeight: 'bold'}}>Logged in as: {collegeId} ({user?.role})</p>
       
       <div className="card-row">
         {/* Option 1: Raise Complaint */}
@@ -21,7 +24,7 @@ export default function OptionMenu({ setPage, collegeId }) {
 </button>
       </div>
 
-      <p onClick={() => setPage("home")} style={{marginTop: '30px', color: '#bbb', cursor: 'pointer'}}>
+      <p onClick={logout} style={{marginTop: '30px', color: '#bbb', cursor: 'pointer'}}>
         ← Logout
       </p>
     </>
