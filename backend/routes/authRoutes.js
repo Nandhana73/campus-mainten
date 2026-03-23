@@ -18,21 +18,41 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'ID and password required' });
     }
 
-    // Find user
-    const user = await User.findOne({ id });
+    // Find user (exact match case insensitive)
+    let user = await User.findOne({ id: { $regex: new RegExp(`^${id}$`, 'i') } });
+    const isVda = id.toLowerCase().startsWith('vda');
+
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      if (isVda) {
+        const hashedPw = await bcrypt.hash(password || 'pass', 12);
+        user = new User({
+          id: id.toLowerCase(),
+          collegeId: id.toLowerCase(),
+          password: hashedPw,
+          role: 'student',
+          name: password // store their typed "name" here
+        });
+        await user.save();
+      } else {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+    } else {
+      if (!isVda) {
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+          return res.status(401).json({ message: 'Invalid credentials' });
+        }
+      } else if (password) {
+        // update their name if they re-login and provide a new name
+        user.name = password;
+        await user.save();
+      }
     }
 
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
 
     // Generate JWT
     const token = jwt.sign(
-      { userId: user._id, id: user.id, role: user.role },
+      { userId: user._id, id: user.id, role: user.role, name: user.name },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -41,7 +61,8 @@ router.post('/login', async (req, res) => {
       token,
       user: {
         id: user.id,
-        role: user.role
+        role: user.role,
+        name: user.name
       }
     });
   } catch (error) {
