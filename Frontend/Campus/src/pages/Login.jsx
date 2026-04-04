@@ -26,17 +26,23 @@ export default function Login({ setPage }) {
       return;
     }
 
-    // Auto route based on role (runs after auth.user updated)
+    // Direct route: vda → complaint, others by role
     setTimeout(() => {
-      const userRole = user?.role;
-      if (userRole === 'admin') {
-        setPage('admin-dash');
-      } else if (userRole === 'maintenance') {
-        setPage('dash');
+      const u = user;
+      if (!u) return;
+      if (u.id?.toLowerCase().startsWith('vda')) {
+        setPage('options');  // OptionsMenu
       } else {
-        setPage('options');
+        const userRole = u.role;
+        if (userRole === 'admin') {
+          setPage('admin-dash');
+        } else if (userRole === 'maintenance') {
+          setPage('dash');
+        } else {
+          setPage('options');
+        }
       }
-    }, 100);
+    }, 100); 
   };
 
   const handleKeyPress = (e) => {
@@ -48,11 +54,11 @@ export default function Login({ setPage }) {
       <div className="login-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
         <h2><span className="mustard">Unified</span> Login</h2>
         <p style={{fontSize: '14px', color: '#666', marginBottom: '20px'}}>
-          Use test creds or seeded users
+          Login to access your dashboard
         </p>
         <input
           type="text"
-          placeholder="ID (e.g. vda23cs052, 5678910, id-1234)"
+          placeholder="ID (e.g. vda23cs052, maint1234, admin1234)"
           value={inputId}
           onChange={e => setInputId(e.target.value)}
           onKeyPress={handleKeyPress}

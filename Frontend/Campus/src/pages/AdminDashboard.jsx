@@ -361,14 +361,18 @@ export default function AdminDashboard({ setPage }) {
                       
                       <div style={{ marginTop: "15px", borderTop: "1px solid #ddd", paddingTop: "15px" }}>
                         <h4 style={{ margin: "0 0 10px 0" }}>Bills / Attachments</h4>
-                        {currentComplaint.bills && currentComplaint.bills.length > 0 ? (
+                        {currentComplaint.bill && currentComplaint.bill.length > 0 ? (
                           <ul style={{ paddingLeft: "20px", marginBottom: "15px" }}>
-                            {currentComplaint.bills.map((bill, idx) => (
+                            {currentComplaint.bill.map((bill, idx) => {
+                              let cleanBill = bill.replace(/\\/g, '/');
+                              if (cleanBill.startsWith('/')) cleanBill = cleanBill.substring(1);
+                              return (
                               <li key={idx} style={{ marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <a href={`http://localhost:5000/${bill.replace(/\\/g, '/')}`} target="_blank" rel="noreferrer" style={{ color: "#007bff", textDecoration: "none", fontWeight: "600" }}>📄 View Bill {idx + 1}</a>
+                                <a href={`http://localhost:5000/${cleanBill}`} target="_blank" rel="noreferrer" style={{ color: "#007bff", textDecoration: "none", fontWeight: "600" }}>📄 View Bill {idx + 1}</a>
                                 <button onClick={() => handleBillDelete(currentComplaint._id, idx)} style={{ padding: "3px 8px", background: "#dc3545", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>Delete</button>
                               </li>
-                            ))}
+                              );
+                            })}
                           </ul>
                         ) : (
                           <p style={{ color: "#777", fontSize: "14px", fontStyle: "italic", marginBottom: "15px" }}>No bills uploaded for this complaint.</p>
