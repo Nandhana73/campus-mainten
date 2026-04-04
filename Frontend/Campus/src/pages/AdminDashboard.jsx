@@ -277,7 +277,6 @@ export default function AdminDashboard({ setPage }) {
               <table style={{ width: "100%", borderCollapse: "collapse", background: "white", borderRadius: "12px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.1)" }}>
                 <thead>
                   <tr style={{ backgroundColor: "#E1AD01", color: "white" }}>
-                    <th style={{ padding: "15px 12px", fontWeight: "700" }}>ID</th>
                     <th style={{ padding: "15px 12px", fontWeight: "700" }}>Date</th>
                     <th style={{ padding: "15px 12px", fontWeight: "700" }}>Block/Room</th>
                     <th style={{ padding: "15px 12px", fontWeight: "700" }}>Student</th>
@@ -290,7 +289,6 @@ export default function AdminDashboard({ setPage }) {
                 <tbody>
                   {filteredComplaints.map((comp) => (
                     <tr key={comp._id} style={{ borderBottom: "1px solid #eee" }}>
-                      <td style={{ padding: "12px", fontSize: "14px" }}>{comp._id.slice(-8)}</td>
                       <td style={{ padding: "12px", fontSize: "14px", color: "#666" }}>{comp.createdAt ? new Date(comp.createdAt).toLocaleDateString() : new Date(parseInt(comp._id.substring(0, 8), 16) * 1000).toLocaleDateString()}</td>
                       <td style={{ padding: "12px", fontSize: "14px" }}>{comp.block} {comp.roomNo}</td>
                       <td style={{ padding: "12px", fontSize: "14px" }}>{comp.name || comp.collegeId}</td>
@@ -335,7 +333,7 @@ export default function AdminDashboard({ setPage }) {
                   ))}
                   {filteredComplaints.length === 0 && (
                     <tr>
-                      <td colSpan="8" style={{ padding: "40px", textAlign: "center", color: "#888" }}>No complaints match filters</td>
+                      <td colSpan="7" style={{ padding: "40px", textAlign: "center", color: "#888" }}>No complaints match filters</td>
                     </tr>
                   )}
                 </tbody>
@@ -351,7 +349,6 @@ export default function AdminDashboard({ setPage }) {
                     <div style={{ background: "white", padding: "30px", borderRadius: "12px", maxWidth: "600px", width: "90%", maxHeight: "80vh", overflow: "auto" }}>
                       <h3 style={{ marginTop: 0, color: "#333", borderBottom: "1px solid #ddd", paddingBottom: "10px" }}>Complaint Details</h3>
                       <div style={{ padding: "15px 0" }}>
-                        <p style={{ margin: "5px 0" }}><strong>ID:</strong> {currentComplaint._id}</p>
                         <p style={{ margin: "5px 0" }}><strong>Date:</strong> {currentComplaint.createdAt ? new Date(currentComplaint.createdAt).toLocaleDateString() : new Date(parseInt(currentComplaint._id.substring(0, 8), 16) * 1000).toLocaleDateString()}</p>
                         <p style={{ margin: "5px 0" }}><strong>Student:</strong> {currentComplaint.name || currentComplaint.collegeId} ({currentComplaint.phone || "N/A"})</p>
                         <p style={{ margin: "5px 0" }}><strong>Location:</strong> {currentComplaint.block} {currentComplaint.roomNo}</p>
