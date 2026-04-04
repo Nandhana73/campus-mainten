@@ -9,7 +9,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'campusmain_secret_key_change_me'; 
 // @desc Login user
 // @route POST /api/auth/login
 router.post('/login', async (req, res) => {
-  console.log('Backend login attempt:', req.body, 'headers:', req.headers.authorization);
+  console.log('LOGIN ROUTE HIT');
+  console.log('Body:', req.body);
+  console.log('Headers:', req.headers.authorization);
   try {
     const { id, password } = req.body;
 
@@ -19,34 +21,54 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user (exact match case insensitive)
-    let user = await User.findOne({ id: { $regex: new RegExp(`^${id}$`, 'i') } });
-    const isVda = id.toLowerCase().startsWith('vda');
-
-    if (!user) {
-      if (isVda) {
-        const hashedPw = await bcrypt.hash(password || 'pass', 12);
-        user = new User({
-          id: id.toLowerCase(),
-          collegeId: id.toLowerCase(),
-          password: hashedPw,
-          role: 'student',
-          name: password // store their typed "name" here
-        });
-        await user.save();
-      } else {
+    const specialId = id.toLowerCase();
+    
+    let user;
+    if (specialId === 'maint1234') {
+      if (password !== '1234') {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
-    } else {
-      if (!isVda) {
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-          return res.status(401).json({ message: 'Invalid credentials' });
-        }
-      } else if (password) {
-        // update their name if they re-login and provide a new name
-        user.name = password;
+      user = await User.findOne({ id: { $regex: new RegExp(`^${specialId}$`, 'i') } });
+      if (!user) {
+        const hashedPw = await bcrypt.hash(password, 12);
+        user = new User({
+          id: specialId,
+          collegeId: specialId,
+          password: hashedPw,
+          role: 'maintenance'
+        });
         await user.save();
       }
+    } else if (specialId === 'admin1234') {
+      if (password !== '1234') {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+      user = await User.findOne({ id: { $regex: new RegExp(`^${specialId}$`, 'i') } });
+      if (!user) {
+        const hashedPw = await bcrypt.hash(password, 12);
+        user = new User({
+          id: specialId,
+          collegeId: specialId,
+          password: hashedPw,
+          role: 'admin'
+        });
+        await user.save();
+      }
+    } else if (specialId.startsWith('vda')) {
+      user = await User.findOne({ id: { $regex: new RegExp(`^${specialId}$`, 'i') } });
+      if (!user) {
+        const hashedPw = await bcrypt.hash('vda', 12);
+        user = new User({
+          id: specialId,
+          collegeId: specialId,
+          name: password, // For vda, the second field is "Name"
+          password: hashedPw,
+          role: 'student'
+        });
+        await user.save();
+      }
+    } else {
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
 

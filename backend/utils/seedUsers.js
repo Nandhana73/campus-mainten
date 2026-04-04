@@ -12,51 +12,13 @@ const seedUsers = async () => {
     await User.deleteMany({});
     console.log('Cleared existing users');
 
-    // Hardcoded users from login components - added collegeId
+    // Minimal seed - only VDA sample. Others dynamically created.
+    // Removed unwanted test passwords/creds (plum/ac/elec etc.)
     const users = [
-      // Admin
-      {
-        id: '5678910',
-        collegeId: 'admin',
-        password: '5678',
-        role: 'admin'
-      },
-      // Maintenance
-      {
-        id: 'plum4321',
-        collegeId: 'plum4321',
-        password: 'plum',
-        role: 'maintenance'
-      },
-      {
-        id: 'ac4321',
-        collegeId: 'ac4321',
-        password: 'ac',
-        role: 'maintenance'
-      },
-      {
-        id: 'elec4321',
-        collegeId: 'elec4321',
-        password: 'elec',
-        role: 'maintenance'
-      },
-      {
-        id: 'furn4321',
-        collegeId: 'furn4321',
-        password: 'furn',
-        role: 'maintenance'
-      },
-      {
-        id: 'id-1234',
-        collegeId: 'id-1234',
-        password: '1234',
-        role: 'maintenance'
-      },
-      // Sample student
       {
         id: 'vda23cs052',
         collegeId: 'vda23cs052',
-        password: 'pass', // not used
+        password: 'vda', // dummy matching backend
         role: 'student'
       }
     ];
