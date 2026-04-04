@@ -1,0 +1,14 @@
+{
+  "name": "campusmain",
+  "version": "1.0.0",
+  "description": "Campus Main Application",
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd backend && npm start",
+    "client": "cd Frontend/Campus && npm start",
+    "install-all": "npm install && cd backend && npm install && cd ../Frontend/Campus && npm install"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
