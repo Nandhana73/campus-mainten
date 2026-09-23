@@ -3,7 +3,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import Complaint from "../models/complaint.js";
+import Complaint from "../models/Complaint.js";
 
 const router = express.Router();
 

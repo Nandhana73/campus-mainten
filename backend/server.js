@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 
@@ -17,17 +18,22 @@ import authRoutesObj from "./routes/authRoutes.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Ensure upload directories exist
+const uploadsDir = path.join(__dirname, "uploads");
+const maintUploadsDir = path.join(__dirname, "maintenance_uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+if (!fs.existsSync(maintUploadsDir)) fs.mkdirSync(maintUploadsDir, { recursive: true });
+
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
-app.use(cors());
 app.use(express.json());
 // Add multipart form data parsing for file uploads
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files - use backend/uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(uploadsDir));
 // Serve maintenance uploaded files - use backend/maintenance_uploads directory
-app.use("/maintenance_uploads", express.static(path.join(__dirname, "maintenance_uploads")));
+app.use("/maintenance_uploads", express.static(maintUploadsDir));
 
 // Connect MongoDB
 connectDB();
