@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.js";
+import { API_BASE_URL } from "../config/api.js";
 
 export default function MyComplaint({ setPage }) {
   const { user } = useAuth();
@@ -12,7 +13,7 @@ export default function MyComplaint({ setPage }) {
     const fetchComplaints = async () => {
       console.log("Fetching complaints for collegeId:", collegeId);
       try {
-        const res = await fetch(`http://localhost:5000/api/complaint/by/${collegeId}`);
+        const res = await fetch(`${API_BASE_URL}/api/complaint/by/${collegeId}`);
 
         if (!res.ok) {
           console.error("Error response:", res.status, res.statusText);

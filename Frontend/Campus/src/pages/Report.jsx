@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.js";
+import { API_BASE_URL } from "../config/api.js";
 
 export default function Report({ selectedRoom, setPage, block }) {
   const { user } = useAuth();
@@ -17,7 +18,7 @@ export default function Report({ selectedRoom, setPage, block }) {
 // -------- FETCH ROOM COMPLAINTS (ALL COLLEGE COMPLAINTS - CAMPUS WIDE) --------
   const fetchRoomComplaints = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/complaint`);
+      const res = await fetch(`${API_BASE_URL}/api/complaint`);
 
       if (res.ok) {
         const allComplaints = await res.json();
@@ -73,7 +74,7 @@ export default function Report({ selectedRoom, setPage, block }) {
       formData.append("description", description);
       formData.append("estimatedAmount", 0);
 
-      const res = await fetch("http://localhost:5000/api/complaint", {
+      const res = await fetch(`${API_BASE_URL}/api/complaint`, {
         method: "POST",
         body: formData
       });
@@ -93,7 +94,7 @@ export default function Report({ selectedRoom, setPage, block }) {
     } catch (err) {
       console.error("Network error:", err);
       alert(
-        "Error: Unable to connect to server. Please make sure backend server is running on port 5000."
+        "Error: Unable to connect to server. Please ensure backend server is reachable."
       );
     } finally {
       setUploading(false);

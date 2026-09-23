@@ -1,8 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-// Simplified without jwt-decode (manual decode/parse)
+import { API_BASE_URL } from '../config/api.js';
 
 const AuthContext = createContext();
+
+function base64urlDecode(str) {
+  str += '='.repeat((4 - str.length % 4) % 4);
+  return JSON.parse(atob(str.replace(/-/g, '+').replace(/_/g, '/')));
+}
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -17,7 +22,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // API base URL
-const API_BASE = '/api';
+  const API_BASE = `${API_BASE_URL}/api`;
 
   const login = async (id, password) => {
     try {
@@ -27,11 +32,6 @@ const API_BASE = '/api';
       // Store token
       localStorage.setItem('token', token);
       
-// Simplified base64url decode (no jwt-decode)
-      function base64urlDecode(str) {
-        str += '='.repeat((4 - str.length % 4) % 4);
-        return JSON.parse(atob(str.replace(/-/g, '+').replace(/_/g, '/')));
-      }
       const payload = base64urlDecode(token.split('.')[1]);
       
       setUser({

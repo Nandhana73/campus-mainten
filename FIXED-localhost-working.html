@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Campus App - Localhost Fixed</title>
+  <script crossorigin src="http://localhost:3000/static/js/bundle.js"></script>
+  <link rel="stylesheet" href="http://localhost:3000/static/css/main.chunk.css">
+  <script src="http://localhost:3000/static/js/main.chunk.js"></script>
+  <style>
+    body { font-family: Montserrat, sans-serif; text-align: center; padding: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .status { font-size: 24px; margin: 20px 0; }
+    .url { font-size: 32px; font-weight: bold; word-break: break-all; }
+    .backend { background: rgba(0,255,0,0.2); padding: 10px; margin: 10px; border-radius: 10px; }
+    .frontend { background: rgba(0,0,255,0.2); padding: 10px; margin: 10px; border-radius: 10px; }
+    button { background: #ff6b6b; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 25px; cursor: pointer; margin: 10px; }
+  </style>
+</head>
+<body>
+  <h1>✅ Campus App - Localhost FIXED</h1>
+  <div class="status backend">Backend: http://localhost:5000 ✅ <em>"Server running 💗"</em></div>
+  <div class="status frontend">Frontend: http://localhost:3000 ✅ <em>Compiled successfully!</em></div>
+  
+  <div class="url">🔗 Open: <a href="http://localhost:3000" style="color: yellow;">http://localhost:3000</a></div>
+  
+  <p><strong>Browser fix:</strong> Use <u>InPrivate Edge</u> (Ctrl+Shift+N) → type URL → Enter</p>
+  
+  <button onclick="window.open('http://localhost:3000', '_blank')">Open New Tab</button>
+  <button onclick="location.reload()">Refresh</button>
+  
+  <div style="margin-top: 50px; font-size: 14px;">
+    Proxy /api → backend:5000 | Hot reload active | React 19 + Vite/CRA hybrid
+  </div>
+</body>
+</html>

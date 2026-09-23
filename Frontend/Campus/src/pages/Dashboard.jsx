@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext.js";
+import { API_BASE_URL } from "../config/api.js";
 
 export default function Dashboard({ setPage }) {
   const { user, logout } = useAuth();
@@ -26,7 +27,7 @@ export default function Dashboard({ setPage }) {
 
   const fetchComplaints = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/complaint", { cache: 'no-store' });
+      const res = await fetch(`${API_BASE_URL}/api/complaint`, { cache: 'no-store' });
       const data = await res.json();
       setComplaints(data);
     } catch (err) {
@@ -36,7 +37,7 @@ export default function Dashboard({ setPage }) {
 
   const fetchStocks = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/stocks", { cache: 'no-store' });
+      const res = await fetch(`${API_BASE_URL}/api/stocks`, { cache: 'no-store' });
       const data = await res.json();
       setStocks(data);
     } catch (err) {
@@ -57,7 +58,7 @@ export default function Dashboard({ setPage }) {
     try {
       const method = editingStock ? 'PATCH' : 'POST';
       const url = editingStock ? `/api/stocks/${editingStock._id}` : '/api/stocks';
-      const res = await fetch(`http://localhost:5000${url}`, {
+      const res = await fetch(`${API_BASE_URL}${url}`, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(stockData),
@@ -86,7 +87,7 @@ export default function Dashboard({ setPage }) {
   const handleDeleteStock = async (id) => {
     if (!confirm('Delete stock?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/stocks/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/api/stocks/${id}`, { method: 'DELETE' });
       if (res.ok) {
         alert('Stock deleted');
         fetchStocks();
@@ -101,7 +102,7 @@ export default function Dashboard({ setPage }) {
 
   const handleStatusChange = async (id, newStatus, newAmount) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/complaint/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/complaint/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus, estimatedAmount: newAmount }),
@@ -128,7 +129,7 @@ export default function Dashboard({ setPage }) {
     setSavingAmountId(id);
     
     try {
-      const res = await fetch(`http://localhost:5000/api/complaint/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/complaint/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estimatedAmount: amount }),
@@ -160,7 +161,7 @@ export default function Dashboard({ setPage }) {
   const handleDeleteComplaint = async (id) => {
     if (!confirm("Delete this complaint?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/complaint/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE_URL}/api/complaint/${id}`, { method: "DELETE" });
       if (res.ok) {
         alert("Complaint deleted");
         fetchComplaints();
@@ -180,7 +181,7 @@ export default function Dashboard({ setPage }) {
     formData.append("bill", file);
     try {
       setUploadingBill(complaintId);
-      const res = await fetch(`http://localhost:5000/api/complaint/${complaintId}/bill`, {
+      const res = await fetch(`${API_BASE_URL}/api/complaint/${complaintId}/bill`, {
         method: "POST",
         body: formData,
       });
@@ -202,7 +203,7 @@ export default function Dashboard({ setPage }) {
   const handleBillDelete = async (complaintId, billIndex) => {
     if (!confirm("Delete this bill?")) return;
     try {
-      const url = `http://localhost:5000/api/complaint/${complaintId}/bill/${billIndex}`;
+      const url = `${API_BASE_URL}/api/complaint/${complaintId}/bill/${billIndex}`;
       const res = await fetch(url, { method: "DELETE" });
       if (res.ok) {
         alert("Bill deleted");
@@ -450,7 +451,7 @@ export default function Dashboard({ setPage }) {
           <div style={modalOverlay} onClick={() => setViewingBill(null)}>
             <div style={modalContent} onClick={(e) => e.stopPropagation()}>
               <h3 style={modalTitle}>Bill</h3>
-              <img src={`http://localhost:5000${viewingBill}`} alt="Bill" style={billModalImg} />
+              <img src={`${API_BASE_URL}${viewingBill}`} alt="Bill" style={billModalImg} />
               <button className="btn-main" onClick={() => setViewingBill(null)}>Close</button>
             </div>
           </div>

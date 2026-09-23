@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext.js";
+import { API_BASE_URL } from "../config/api.js";
 
 export default function AdminDashboard({ setPage }) {
   const { logout } = useAuth();
@@ -24,7 +25,7 @@ export default function AdminDashboard({ setPage }) {
   const fetchComplaints = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/complaint", { cache: 'no-store' });
+      const res = await fetch(`${API_BASE_URL}/api/complaint`, { cache: 'no-store' });
       const data = await res.json();
       setComplaints(data);
       
@@ -35,10 +36,10 @@ export default function AdminDashboard({ setPage }) {
         // Sort by date (oldest first) and keep only the latest 49
         const toDelete = completedComplaints.slice(0, completedComplaints.length - 49);
         for (const complaint of toDelete) {
-          await fetch(`http://localhost:5000/api/complaint/${complaint._id}`, { method: "DELETE" });
+          await fetch(`${API_BASE_URL}/api/complaint/${complaint._id}`, { method: "DELETE" });
         }
         // Refetch after deletion
-        const refetchRes = await fetch("http://localhost:5000/api/complaint", { cache: 'no-store' });
+        const refetchRes = await fetch(`${API_BASE_URL}/api/complaint`, { cache: 'no-store' });
         const refetchData = await refetchRes.json();
         setComplaints(refetchData);
       }
@@ -51,7 +52,7 @@ export default function AdminDashboard({ setPage }) {
 
   const fetchStocks = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/stocks", { cache: 'no-store' });
+      const res = await fetch(`${API_BASE_URL}/api/stocks`, { cache: 'no-store' });
       const data = await res.json();
       setStocks(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -60,7 +61,7 @@ export default function AdminDashboard({ setPage }) {
   };
 
   const handleStatusChange = async (id, newStatus) => {
-    await fetch(`http://localhost:5000/api/complaint/${id}`, {
+    await fetch(`${API_BASE_URL}/api/complaint/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
@@ -79,7 +80,7 @@ export default function AdminDashboard({ setPage }) {
     }
     
     try {
-      await fetch(`http://localhost:5000/api/complaint/${id}`, {
+      await fetch(`${API_BASE_URL}/api/complaint/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estimatedAmount: newAmount }),
@@ -101,12 +102,12 @@ export default function AdminDashboard({ setPage }) {
 
   const handleDeleteComplaint = async (id) => {
     if (!window.confirm("Delete complaint?")) return;
-    await fetch(`http://localhost:5000/api/complaint/${id}`, { method: "DELETE" });
+    await fetch(`${API_BASE_URL}/api/complaint/${id}`, { method: "DELETE" });
     fetchComplaints();
   };
 
   const handleStockChange = async (id, newQty) => {
-    await fetch(`http://localhost:5000/api/stocks/${id}`, {
+    await fetch(`${API_BASE_URL}/api/stocks/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ qty: newQty }),
@@ -116,7 +117,7 @@ export default function AdminDashboard({ setPage }) {
 
   const handleAddStock = async () => {
     if (!newStockItem.item || !newStockItem.location) return alert("Fill all fields");
-    await fetch("http://localhost:5000/api/stocks", {
+    await fetch(`${API_BASE_URL}/api/stocks`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newStockItem),
@@ -134,12 +135,12 @@ export default function AdminDashboard({ setPage }) {
 
   const handleDeleteStock = async (id) => {
     if (!window.confirm("Delete stock?")) return;
-    await fetch(`http://localhost:5000/api/stocks/${id}`, { method: "DELETE" });
+    await fetch(`${API_BASE_URL}/api/stocks/${id}`, { method: "DELETE" });
     fetchStocks();
   };
 
   const handleSaveEdit = async () => {
-    await fetch(`http://localhost:5000/api/stocks/${editingStock._id}`, {
+    await fetch(`${API_BASE_URL}/api/stocks/${editingStock._id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newStockItem),
@@ -155,7 +156,7 @@ export default function AdminDashboard({ setPage }) {
     setUploadingBill(complaintId);
     const formData = new FormData();
     formData.append("bill", file);
-    await fetch(`http://localhost:5000/api/complaint/${complaintId}/bill`, { method: "POST", body: formData });
+    await fetch(`${API_BASE_URL}/api/complaint/${complaintId}/bill`, { method: "POST", body: formData });
     fetchComplaints();
     setUploadingBill(null);
   };
@@ -163,7 +164,7 @@ export default function AdminDashboard({ setPage }) {
   const handleBillDelete = async (complaintId, billIndex) => {
     if (!confirm("Are you sure you want to delete this bill?")) return;
     try {
-      const url = `http://localhost:5000/api/complaint/${complaintId}/bill/${billIndex}`;
+      const url = `${API_BASE_URL}/api/complaint/${complaintId}/bill/${billIndex}`;
       const res = await fetch(url, { method: "DELETE" });
       if (res.ok) {
         alert("Bill deleted successfully!");
@@ -365,7 +366,7 @@ export default function AdminDashboard({ setPage }) {
                               if (cleanBill.startsWith('/')) cleanBill = cleanBill.substring(1);
                               return (
                               <li key={idx} style={{ marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <a href={`http://localhost:5000/${cleanBill}`} target="_blank" rel="noreferrer" style={{ color: "#007bff", textDecoration: "none", fontWeight: "600" }}>📄 View Bill {idx + 1}</a>
+                                <a href={`${API_BASE_URL}/${cleanBill}`} target="_blank" rel="noreferrer" style={{ color: "#007bff", textDecoration: "none", fontWeight: "600" }}>📄 View Bill {idx + 1}</a>
                                 <button onClick={() => handleBillDelete(currentComplaint._id, idx)} style={{ padding: "3px 8px", background: "#dc3545", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>Delete</button>
                               </li>
                               );
